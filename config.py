@@ -1,0 +1,32 @@
+from os import environ as envi
+from dotenv import load_dotenv
+
+load_dotenv()
+
+BILINE_BASE_URL = envi.get('BILINE_BASE_URL')
+BILINE_CLIENT_ID = envi.get('BILINE_CLIENT_ID')
+BILINE_CLIENT_SECRET = envi.get('BILINE_CLIENT_SECRET')
+BILINE_USERNAME = envi.get('BILINE_USERNAME')
+BILINE_PASSWORD = envi.get('BILINE_PASSWORD')
+BILINE_DASHBORD = envi.get('BILINE_DASHBORD')
+
+MTS_BASE_URL = envi.get('MTS_BASE_URL')
+MTS_USERNAME = envi.get('MTS_USERNAME')
+MTS_PASSWORD = envi.get('MTS_PASSWORD')
+MTS_PARENT_TEL_NUMBER = envi.get('MTS_PARENT_TEL_NUMBER')
+MTS_ACCOUNT_NUMBER = envi.get('MTS_ACCOUNT_NUMBER')
+
+TELE_TWO_BASE_URL = envi.get('TELE_TWO_BASE_URL')
+TELE_TWO_USERNAME = envi.get('TELE_TWO_USERNAME')
+TELE_TWO_PASSWORD = envi.get('TELE_TWO_PASSWORD')
+
+USER_IP = envi.get('USER_IP')
+
+DB_HOST=envi.get('DB_HOST')
+MYSQL_USER=envi.get('MYSQL_USER')
+MYSQL_DB_NAME=envi.get('MYSQL_DB_NAME')
+MYSQL_PASSWORD=envi.get('MYSQL_PASSWORD')
+MYSQL_PORT=envi.get('MYSQL_PORT')
+
+connection_mysql = f"mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_PASSWORD}@{DB_HOST}:{MYSQL_PORT}/{MYSQL_DB_NAME}"
+
