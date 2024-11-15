@@ -1,17 +1,20 @@
+from time import sleep
 import requests
 import json
 
 import sys
 sys.path.append('../')
 from sim_operators_work.logger import logger as log
-#
-# # # Настройки
+# from sim_operators_work import config as config
+# from sim_operators_work import help_funcs
+
+# # Настройки
 # base_url = config.MTS_BASE_URL
 # username = config.MTS_USERNAME
 # password = config.MTS_PASSWORD
 # parent_tel_number = config.MTS_PARENT_TEL_NUMBER
 # account = config.MTS_ACCOUNT_NUMBER # Номер лицевого счёта
-
+#
 class MtsApi:
     def __init__(self, base_url, username, password, accountNo):
         """ 
@@ -52,7 +55,7 @@ class MtsApi:
         :return: dict
 
         """
-        url = f"{self.base_url}/b2b/v1/Service/HierarchyStructure?account={int(self.accountNo)}&pageNum={int(pageNum)}&pageSize=200"
+        url = f"{self.base_url}/b2b/v1/Service/HierarchyStructure?account={int(self.accountNo)}&pageNum={int(pageNum)}&pageSize=100"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.access_token}",
@@ -101,6 +104,7 @@ class MtsApi:
         Принимает:
         1 Номер телефона
         """
+        sleep(1)
         url = f"{self.base_url}/b2b/v1/Product/ProductInfo?category.name=MobileConnectivity&marketSegment.characteristic.name=MSISDN&marketSegment.characteristic.value={tel_number}&productOffering.actionAllowed=none&productOffering.productSpecification.productSpecificationType.name=block&applyTimeZone=true"
         headers = {
             "Content-Type": "application/json",
@@ -163,7 +167,8 @@ class MtsApi:
 # #detail_location = mts_api.get_detail_location_from_tel_number()
 # #top_tarif = mts_api.get_top_tarif_from_tel_number("79101313428")
 # #get_all_services = mts_api.get_all_services()
-#
+
+# print(help_funcs.mts_status_convert(detail_blocks[0]["name"]))
 #
 # with open('mts_detai_blocks_79108933613.json', 'w', encoding='utf-8') as file:
 #     json.dump(detail_blocks, file, indent=2, ensure_ascii=False)

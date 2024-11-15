@@ -16,9 +16,9 @@ def generate_mysql_models(
     call(f"sqlacodegen {connection_string} > {current_dir}/{output_file}", shell=True)
 
 
-if __name__ == "__main__":
-    generate_mysql_models(
-        connector=str(config.connection_mysql),
-        filename="mysql_models"
-    )
+# if __name__ == "__main__":
+#     generate_mysql_models(
+#         connector=str(config.connection_mysql),
+#         filename="mysql_models"
+#     )
 
