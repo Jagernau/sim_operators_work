@@ -5,9 +5,10 @@ import json
 import sys
 sys.path.append('../')
 from sim_operators_work.logger import logger as log
+
 # from sim_operators_work import config as config
 # from sim_operators_work import help_funcs
-
+#
 # # Настройки
 # base_url = config.MTS_BASE_URL
 # username = config.MTS_USERNAME
@@ -31,6 +32,9 @@ class MtsApi:
         self.access_token = None
 
     def get_access_token(self):
+        sleep(2)
+        log.info(f"Начало обращения к МТС для получения токена")
+
         url = f"{self.base_url}/token"
         auth = (f"{self.username}", f"{self.password}")
         data = {
@@ -43,6 +47,7 @@ class MtsApi:
             log.info(f"Получен токен доступа от МТС: {self.access_token}")
         else:
             log.error(f"Ошибка получения токена от МТС: {response.status_code} - {response.text}")
+            raise ValueError('Не получает ТОКЕН')
 
 
     def get_structure_abonents(self, pageNum: int): # Получение симок
@@ -55,18 +60,22 @@ class MtsApi:
         :return: dict
 
         """
-        url = f"{self.base_url}/b2b/v1/Service/HierarchyStructure?account={int(self.accountNo)}&pageNum={int(pageNum)}&pageSize=100"
+        sleep(2)
+        log.info(f"Начало обращения к МТС для получения СИМ")
+
+        url = f"{self.base_url}/b2b/v1/Service/HierarchyStructure?account={int(self.accountNo)}&pageNum={int(pageNum)}&pageSize=500"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.access_token}",
         }
         response = requests.get(url=url, headers=headers)
         if response.status_code == 200:
-            log.info(f"Получены данные по всем сим страница - {pageNum}")
+            log.info(f"Получены данные по всем сим страница - {pageNum} {response.status_code}")
             return response.json()
         else:
-            log.error(f"Данные по МТС не полученны со страницы - {pageNum}")
-            return None
+            log.error(f"Данные по МТС не полученны со страницы - {pageNum} {response.status_code}")
+            raise ValueError('Не получает ИНФО ПО СИМ')
+
 
     def get_detail_internet_from_tel_number(self, tel_number): # Полный хаос не понятно
         """ 
@@ -104,14 +113,24 @@ class MtsApi:
         Принимает:
         1 Номер телефона
         """
-        sleep(1)
+        sleep(2)
+
+        log.info(f"Начало получения детализации по блокировкам сим {tel_number}")
+
         url = f"{self.base_url}/b2b/v1/Product/ProductInfo?category.name=MobileConnectivity&marketSegment.characteristic.name=MSISDN&marketSegment.characteristic.value={tel_number}&productOffering.actionAllowed=none&productOffering.productSpecification.productSpecificationType.name=block&applyTimeZone=true"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.access_token}",
         }
         response = requests.get(url=url, headers=headers)
-        return response.json()
+        if response.status_code == 200:
+            log.info(f"Конец получения детализации по блокировкам сим {tel_number}")
+            return response.json()
+        else:
+            raise ValueError('Не получает СТАТУСЫ')
+
+
+
 
     def get_top_tarif_from_tel_number(self, tel_number):
         """ 
@@ -163,7 +182,7 @@ class MtsApi:
 #
 # #detail_service = mts_api.get_detail_service_from_tel_number("79108933613")
 # #detail_internet = mts_api.get_detail_internet_from_tel_number("79108933613")
-# detail_blocks = mts_api.get_detail_blocks_from_tel_number("79108933613")
+# detail_blocks = mts_api.get_detail_blocks_from_tel_number("79867505908")
 # #detail_location = mts_api.get_detail_location_from_tel_number()
 # #top_tarif = mts_api.get_top_tarif_from_tel_number("79101313428")
 # #get_all_services = mts_api.get_all_services()
@@ -173,5 +192,5 @@ class MtsApi:
 # with open('mts_detai_blocks_79108933613.json', 'w', encoding='utf-8') as file:
 #     json.dump(detail_blocks, file, indent=2, ensure_ascii=False)
 
-
+# print(detail_blocks)
 
