@@ -127,9 +127,9 @@ class MtsApi:
             log.info(f"Конец получения детализации по блокировкам сим {tel_number}")
             return response.json()
         else:
+
+            log.error(f"Не получены блокировки по СИМ {tel_number} ---- {response.status_code} ---- {response.text}")
             raise ValueError('Не получает СТАТУСЫ')
-
-
 
 
     def get_top_tarif_from_tel_number(self, tel_number):
