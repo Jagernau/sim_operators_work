@@ -44,8 +44,14 @@ def mts_merge_data():
                             log.info("Cтатус сим MTS успешно получен")
 
                         except Exception as e:
-                            log.error(f"В обработке получения статуса сим MTS возникла ошибка {e}")
-                            continue
+                            try:
+                                token = mts_class.get_access_token()
+                                log.error(f"Повторная попытка получения токена {token}")
+                                block_status = mts_class.get_detail_blocks_from_tel_number(str(tel_num))
+                                log.error(f"Повторная попытка получения блокировок сим успешно прошла")
+                            except:
+                                log.error(f"Повторная попытка получения блокировок сим не дала результатов")
+                                continue
                         else:
                             if len(block_status) == 0:
                                 block_status = 1
@@ -83,8 +89,14 @@ def mts_merge_data():
                             log.info("Cтатус сим MTS успешно получен")
 
                         except Exception as e:
-                            log.error(f"В обработке получения статуса сим MTS возникла ошибка {e}")
-                            continue
+                            try:
+                                token = mts_class.get_access_token()
+                                log.error(f"Повторная попытка получения токена {token}")
+                                block_status = mts_class.get_detail_blocks_from_tel_number(str(tel_num))
+                                log.error(f"Повторная попытка получения блокировок сим")
+                            except:
+                                log.error(f"Повторная попытка получения блокировок сим не дала результатов")
+                                continue
                         else:
                             if len(block_status) == 0:
                                 block_status = 1
