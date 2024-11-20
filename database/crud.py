@@ -83,13 +83,9 @@ def update_one_sim(marge_data):
     session = db.session
     if marge_data["iccid"] in unic_db_iccid:
         sim_in_db = session.query(
-                models.SimCard.sim_iccid
+                models.SimCard
                 ).filter(models.SimCard.sim_iccid == marge_data['iccid']).first()
-        if marge_data['tel_num'] != sim_in_db.sim_tel_number:
-            session.execute(
-                            update(models.SimCard)
-                            .where(models.SimCard.sim_iccid == marge_data['iccid'])
-                            .values(sim_tel_number = marge_data['tel_num']))
+        if str(sim_in_db.sim_tel_number) != str(marge_data['tel_num']):
 
             changes = models.GlobalLogging(
                     section_type="sim_card",
@@ -110,12 +106,15 @@ def update_one_sim(marge_data):
             session.add(changes)
             session.commit()
 
-
-        if marge_data['status'] != sim_in_db.status:
             session.execute(
                             update(models.SimCard)
                             .where(models.SimCard.sim_iccid == marge_data['iccid'])
-                            .values(status = marge_data['status']))
+                            .values(sim_tel_number = str(marge_data['tel_num'])))
+
+            session.commit()
+
+
+        if int(sim_in_db.status) != int(marge_data['status']):
 
             changes = models.GlobalLogging(
                     section_type="sim_card",
@@ -127,8 +126,8 @@ def update_one_sim(marge_data):
                             models.SimCard.sim_iccid == marge_data["iccid"]
                             ).first()[0],
                     field="status",
-                    old_value=sim_in_db.status,
-                    new_value=marge_data["status"],
+                    old_value=int(sim_in_db.status),
+                    new_value=int(marge_data["status"]),
                     action="update",
                     sys_id=marge_data["operator"],
                     contragent_id=None
@@ -136,12 +135,13 @@ def update_one_sim(marge_data):
             session.add(changes)
             session.commit()
 
-
-        if marge_data['operator'] != sim_in_db.sim_cell_operator:
             session.execute(
                             update(models.SimCard)
                             .where(models.SimCard.sim_iccid == marge_data['iccid'])
-                            .values(sim_cell_operator = marge_data['operator']))
+                            .values(status = marge_data['status']))
+            session.commit()
+
+        if int(sim_in_db.sim_cell_operator) != int(marge_data['operator']):
 
             changes = models.GlobalLogging(
                     section_type="sim_card",
@@ -153,12 +153,20 @@ def update_one_sim(marge_data):
                             models.SimCard.sim_iccid == marge_data["iccid"]
                             ).first()[0],
                     field="sim_cell_operator",
-                    old_value=sim_in_db.sim_cell_operator,
-                    new_value=marge_data["operator"],
+                    old_value=int(sim_in_db.sim_cell_operator),
+                    new_value=int(marge_data["operator"]),
                     action="update",
                     sys_id=marge_data["operator"],
                     contragent_id=None
                     )
             session.add(changes)
             session.commit()
+
+            session.execute(
+                            update(models.SimCard)
+                            .where(models.SimCard.sim_iccid == marge_data['iccid'])
+                            .values(sim_cell_operator = marge_data['operator']))
+
+            session.commit()
+
     session.close()

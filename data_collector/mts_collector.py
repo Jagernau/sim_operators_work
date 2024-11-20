@@ -63,7 +63,7 @@ class MtsApi:
         sleep(2)
         log.info(f"Начало обращения к МТС для получения СИМ")
 
-        url = f"{self.base_url}/b2b/v1/Service/HierarchyStructure?account={int(self.accountNo)}&pageNum={int(pageNum)}&pageSize=500"
+        url = f"{self.base_url}/b2b/v1/Service/HierarchyStructure?account={int(self.accountNo)}&pageNum={int(pageNum)}&pageSize=100"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.access_token}",

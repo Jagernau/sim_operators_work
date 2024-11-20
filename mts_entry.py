@@ -20,7 +20,6 @@ def mts_merge_data():
 
     
     while True:
-        sleep(1.8)
         try:
             mts_class.get_access_token()
             mts_data = mts_class.get_structure_abonents(page_count)
@@ -67,6 +66,7 @@ def mts_merge_data():
                             try:
                                 log.info(f"Начало попытки записи в БД")
                                 crud.add_one_sim(marge)
+                                crud.update_one_sim(marge)          
                                 log.info(f"Данные успешно записанны в БД")
 
                             except Exception as e:
@@ -75,7 +75,6 @@ def mts_merge_data():
                             json_data.append(marge)
 
                     page_count += 1
-
                 else:
                     all_sims = mts_data[0]["partyRole"][0]["customerAccount"][0]["productRelationship"]
                     for i in all_sims:
@@ -112,6 +111,7 @@ def mts_merge_data():
                             try:
                                 log.info(f"Начало попытки записи в БД")
                                 crud.add_one_sim(marge)
+                                crud.update_one_sim(marge)          
                                 log.info(f"Данные успешно записанны в БД")
 
                             except Exception as e:
