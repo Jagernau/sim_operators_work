@@ -2,6 +2,12 @@ import database.mysql_models as models
 from database.db_conectors import MysqlDatabase
 from sqlalchemy import update
 
+import sys
+
+sys.path.append('../')
+from sim_operators_work.logger import logger as log
+
+
 def get_all_sim_issid():
     db = MysqlDatabase()
     session = db.session
@@ -31,37 +37,41 @@ def add_one_sim(marge_data):
     db = MysqlDatabase()
     session = db.session
     if marge_data["iccid"] not in unic_db_iccid:
-        sim_card = models.SimCard(
-                sim_cell_operator=marge_data["operator"],
-                sim_owner=marge_data["owner"],
-                sim_tel_number=marge_data["tel_num"],
-                sim_iccid=marge_data["iccid"],
-                status=marge_data["status"]
-                )
-        session.add(sim_card)
-        session.commit()
-        session.close()
+        try:
+            sim_card = models.SimCard(
+                    sim_cell_operator=marge_data["operator"],
+                    sim_owner=marge_data["owner"],
+                    sim_tel_number=marge_data["tel_num"],
+                    sim_iccid=marge_data["iccid"],
+                    status=marge_data["status"]
+                    )
+            session.add(sim_card)
+            session.commit()
 
-        changes = models.GlobalLogging(
-                section_type="sim_card",
-                edit_id=session.query(
-                    models.SimCard.sim_id,
-                    models.SimCard.sim_cell_operator,
-                    models.SimCard.sim_iccid
-                    ).filter(
-                        models.SimCard.sim_cell_operator == marge_data["operator"],
-                        models.SimCard.sim_iccid == marge_data["iccid"]
-                        ).first()[0],
-                field="iccid",
-                old_value="0",
-                new_value=marge_data["iccid"],
-                action="add",
-                sys_id=marge_data["operator"],
-                contragent_id=None
-                )
-        session.add(changes)
-        session.commit()
-        session.close()
+            changes = models.GlobalLogging(
+                    section_type="sim_card",
+                    edit_id=session.query(
+                        models.SimCard.sim_id,
+                        models.SimCard.sim_cell_operator,
+                        models.SimCard.sim_iccid
+                        ).filter(
+                            models.SimCard.sim_cell_operator == marge_data["operator"],
+                            models.SimCard.sim_iccid == marge_data["iccid"]
+                            ).first()[0],
+                    field="iccid",
+                    old_value="0",
+                    new_value=marge_data["iccid"],
+                    action="add",
+                    sys_id=marge_data["operator"],
+                    contragent_id=None
+                    )
+            session.add(changes)
+            session.commit()
+
+        except Exception as e:
+            log.error(f"В добавлении сим по одному возникла ошибка {e}")
+        finally:
+            session.close()
 
 
 def update_one_sim(marge_data):
@@ -85,88 +95,97 @@ def update_one_sim(marge_data):
         sim_in_db = session.query(
                 models.SimCard
                 ).filter(models.SimCard.sim_iccid == marge_data['iccid']).first()
-        if str(sim_in_db.sim_tel_number) != str(marge_data['tel_num']):
+        try:
+            if str(sim_in_db.sim_tel_number) != str(marge_data['tel_num']):
 
-            changes = models.GlobalLogging(
-                    section_type="sim_card",
-                    edit_id=session.query(
-                        models.SimCard.sim_id,
-                        models.SimCard.sim_cell_operator,
-                        models.SimCard.sim_iccid
-                        ).filter(
-                            models.SimCard.sim_iccid == marge_data["iccid"]
-                            ).first()[0],
-                    field="sim_tel_number",
-                    old_value=sim_in_db.sim_tel_number,
-                    new_value=marge_data["tel_num"],
-                    action="update",
-                    sys_id=marge_data["operator"],
-                    contragent_id=None
-                    )
-            session.add(changes)
-            session.commit()
+                changes = models.GlobalLogging(
+                        section_type="sim_card",
+                        edit_id=session.query(
+                            models.SimCard.sim_id,
+                            models.SimCard.sim_cell_operator,
+                            models.SimCard.sim_iccid
+                            ).filter(
+                                models.SimCard.sim_iccid == marge_data["iccid"]
+                                ).first()[0],
+                        field="sim_tel_number",
+                        old_value=sim_in_db.sim_tel_number,
+                        new_value=marge_data["tel_num"],
+                        action="update",
+                        sys_id=marge_data["operator"],
+                        contragent_id=None
+                        )
+                session.add(changes)
+                session.commit()
 
-            session.execute(
-                            update(models.SimCard)
-                            .where(models.SimCard.sim_iccid == marge_data['iccid'])
-                            .values(sim_tel_number = str(marge_data['tel_num'])))
+                session.execute(
+                                update(models.SimCard)
+                                .where(models.SimCard.sim_iccid == marge_data['iccid'])
+                                .values(sim_tel_number = str(marge_data['tel_num'])))
 
-            session.commit()
+                session.commit()
 
+        except Exception as e:
+            log.error(f"В обновлении сим ТЕЛЕФОНА возникла ошибка {e}")
 
-        if int(sim_in_db.status) != int(marge_data['status']):
+        try:
+            if sim_in_db.status != int(marge_data['status']):
+                changes = models.GlobalLogging(
+                        section_type="sim_card",
+                        edit_id=session.query(
+                            models.SimCard.sim_id,
+                            models.SimCard.sim_cell_operator,
+                            models.SimCard.sim_iccid
+                            ).filter(
+                                models.SimCard.sim_iccid == marge_data["iccid"]
+                                ).first()[0],
+                        field="status",
+                        old_value=int(sim_in_db.status),
+                        new_value=int(marge_data["status"]),
+                        action="update",
+                        sys_id=marge_data["operator"],
+                        contragent_id=None
+                        )
+                session.add(changes)
+                session.commit()
 
-            changes = models.GlobalLogging(
-                    section_type="sim_card",
-                    edit_id=session.query(
-                        models.SimCard.sim_id,
-                        models.SimCard.sim_cell_operator,
-                        models.SimCard.sim_iccid
-                        ).filter(
-                            models.SimCard.sim_iccid == marge_data["iccid"]
-                            ).first()[0],
-                    field="status",
-                    old_value=int(sim_in_db.status),
-                    new_value=int(marge_data["status"]),
-                    action="update",
-                    sys_id=marge_data["operator"],
-                    contragent_id=None
-                    )
-            session.add(changes)
-            session.commit()
+                session.execute(
+                                update(models.SimCard)
+                                .where(models.SimCard.sim_iccid == marge_data['iccid'])
+                                .values(status = marge_data['status']))
+                session.commit()
+        except Exception as e:
+            log.error(f"В обновлении сим СТАТУСА возникла ошибка {e}")
 
-            session.execute(
-                            update(models.SimCard)
-                            .where(models.SimCard.sim_iccid == marge_data['iccid'])
-                            .values(status = marge_data['status']))
-            session.commit()
+        try:
+            if int(sim_in_db.sim_cell_operator) != int(marge_data['operator']):
+                changes = models.GlobalLogging(
+                        section_type="sim_card",
+                        edit_id=session.query(
+                            models.SimCard.sim_id,
+                            models.SimCard.sim_cell_operator,
+                            models.SimCard.sim_iccid
+                            ).filter(
+                                models.SimCard.sim_iccid == marge_data["iccid"]
+                                ).first()[0],
+                        field="sim_cell_operator",
+                        old_value=int(sim_in_db.sim_cell_operator),
+                        new_value=int(marge_data["operator"]),
+                        action="update",
+                        sys_id=marge_data["operator"],
+                        contragent_id=None
+                        )
+                session.add(changes)
+                session.commit()
 
-        if int(sim_in_db.sim_cell_operator) != int(marge_data['operator']):
+                session.execute(
+                                update(models.SimCard)
+                                .where(models.SimCard.sim_iccid == marge_data['iccid'])
+                                .values(sim_cell_operator = marge_data['operator']))
 
-            changes = models.GlobalLogging(
-                    section_type="sim_card",
-                    edit_id=session.query(
-                        models.SimCard.sim_id,
-                        models.SimCard.sim_cell_operator,
-                        models.SimCard.sim_iccid
-                        ).filter(
-                            models.SimCard.sim_iccid == marge_data["iccid"]
-                            ).first()[0],
-                    field="sim_cell_operator",
-                    old_value=int(sim_in_db.sim_cell_operator),
-                    new_value=int(marge_data["operator"]),
-                    action="update",
-                    sys_id=marge_data["operator"],
-                    contragent_id=None
-                    )
-            session.add(changes)
-            session.commit()
+                session.commit()
 
-            session.execute(
-                            update(models.SimCard)
-                            .where(models.SimCard.sim_iccid == marge_data['iccid'])
-                            .values(sim_cell_operator = marge_data['operator']))
+        except Exception as e:
+            log.error(f"В обновлении сим ОПЕРАТОРА возникла ошибка {e}")
 
-            session.commit()
-
-    session.close()
+        finally:
+         session.close()

@@ -3,6 +3,7 @@ import requests
 import json
 
 import sys
+
 sys.path.append('../')
 from sim_operators_work.logger import logger as log
 
@@ -63,7 +64,7 @@ class MtsApi:
         sleep(2)
         log.info(f"Начало обращения к МТС для получения СИМ")
 
-        url = f"{self.base_url}/b2b/v1/Service/HierarchyStructure?account={int(self.accountNo)}&pageNum={int(pageNum)}&pageSize=100"
+        url = f"{self.base_url}/b2b/v1/Service/HierarchyStructure?account={int(self.accountNo)}&pageNum={int(pageNum)}&pageSize=50"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.access_token}",
@@ -98,13 +99,20 @@ class MtsApi:
         Принимает:
         1 Номер телефона
         """
+        sleep(2)
         url = f"{self.base_url}/b2b/v1/Product/ProductInfo?category.name=MobileConnectivity&marketSegment.characteristic.name=MSISDN&marketSegment.characteristic.value={tel_number}&productOffering.actionAllowed=none&productOffering.productSpecification.productSpecificationType.name=service&fields=CalculatePrices&applyTimeZone"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.access_token}",
         }
         response = requests.get(url=url, headers=headers)
-        return response.json()
+        if response.status_code == 200:
+            log.info(f"Получены статусы услуг {response.status_code}")
+            return response.json()
+        else:
+            log.error(f"Данные по услугам МТС не полученны {response.status_code}")
+            raise ValueError('Не получает услуги')
+
 
 
     def get_detail_blocks_from_tel_number(self, tel_number):
@@ -177,20 +185,20 @@ class MtsApi:
 
 # mts_api = MtsApi(base_url, username, password, accountNo=account)
 # mts_api.get_access_token()
-# #all_sims = mts_api.get_all_sims(parent_tel_number)
-# #structure_abonents = mts_api.get_structure_abonents(pageNum=1)
+# # # #all_sims = mts_api.get_all_sims(parent_tel_number)
+# # # #structure_abonents = mts_api.get_structure_abonents(pageNum=1)
+# # #
+# detail_service = mts_api.get_detail_service_from_tel_number("79159357944")
+# # # #detail_internet = mts_api.get_detail_internet_from_tel_number("79108933613")
+# # # detail_blocks = mts_api.get_detail_blocks_from_tel_number("79867505908")
+# # # #detail_location = mts_api.get_detail_location_from_tel_number()
+# # # #top_tarif = mts_api.get_top_tarif_from_tel_number("79101313428")
+# # # #get_all_services = mts_api.get_all_services()
 #
-# #detail_service = mts_api.get_detail_service_from_tel_number("79108933613")
-# #detail_internet = mts_api.get_detail_internet_from_tel_number("79108933613")
-# detail_blocks = mts_api.get_detail_blocks_from_tel_number("79867505908")
-# #detail_location = mts_api.get_detail_location_from_tel_number()
-# #top_tarif = mts_api.get_top_tarif_from_tel_number("79101313428")
-# #get_all_services = mts_api.get_all_services()
+# result = {i["name"] for i in detail_service}
+# print(result)
+# #
+# with open('mts_detai_serv_79159357944.json', 'w', encoding='utf-8') as file:
+#     json.dump(detail_service, file, indent=2, ensure_ascii=False)
 
-# print(help_funcs.mts_status_convert(detail_blocks[0]["name"]))
-#
-# with open('mts_detai_blocks_79108933613.json', 'w', encoding='utf-8') as file:
-#     json.dump(detail_blocks, file, indent=2, ensure_ascii=False)
-
-# print(detail_blocks)
 

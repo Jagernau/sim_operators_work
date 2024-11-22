@@ -39,6 +39,7 @@ def mts_merge_data():
                         # если нет блокировки - то пусто
                         try:
                             log.info("Начало получения статуса сим MTS")
+
                             block_status = mts_class.get_detail_blocks_from_tel_number(str(tel_num))
                             log.info("Cтатус сим MTS успешно получен")
 
@@ -46,6 +47,7 @@ def mts_merge_data():
                             try:
                                 token = mts_class.get_access_token()
                                 log.error(f"Повторная попытка получения токена {token}")
+
                                 block_status = mts_class.get_detail_blocks_from_tel_number(str(tel_num))
                                 log.error(f"Повторная попытка получения блокировок сим успешно прошла")
                             except:
@@ -75,6 +77,7 @@ def mts_merge_data():
                             json_data.append(marge)
 
                     page_count += 1
+
                 else:
                     all_sims = mts_data[0]["partyRole"][0]["customerAccount"][0]["productRelationship"]
                     for i in all_sims:
