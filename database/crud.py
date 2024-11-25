@@ -30,6 +30,7 @@ def add_one_sim(marge_data):
     - tel_num: str
     - iccid: str
     - status: int
+    - block_start: str
     """
     unic_db_iccid = {item[0] for item in get_all_sim_issid()}
 
@@ -43,7 +44,8 @@ def add_one_sim(marge_data):
                     sim_owner=marge_data["owner"],
                     sim_tel_number=marge_data["tel_num"],
                     sim_iccid=marge_data["iccid"],
-                    status=marge_data["status"]
+                    status=marge_data["status"],
+                    block_start=marge_data["block_start"]
                     )
             session.add(sim_card)
             session.commit()
@@ -181,6 +183,37 @@ def update_one_sim(marge_data):
                                 update(models.SimCard)
                                 .where(models.SimCard.sim_iccid == marge_data['iccid'])
                                 .values(sim_cell_operator = marge_data['operator']))
+
+                session.commit()
+
+        except Exception as e:
+            log.error(f"В обновлении сим ОПЕРАТОРА возникла ошибка {e}")
+
+        try:
+            if sim_in_db.block_start != marge_data["block_start"] :
+                changes = models.GlobalLogging(
+                        section_type="sim_card",
+                        edit_id=session.query(
+                            models.SimCard.sim_id,
+                            models.SimCard.sim_cell_operator,
+                            models.SimCard.sim_iccid
+                            ).filter(
+                                models.SimCard.sim_iccid == marge_data["iccid"]
+                                ).first()[0],
+                        field="block_start",
+                        old_value=sim_in_db.block_start,
+                        new_value=marge_data["block_start"],
+                        action="update",
+                        sys_id=marge_data["operator"],
+                        contragent_id=None
+                        )
+                session.add(changes)
+                session.commit()
+
+                session.execute(
+                                update(models.SimCard)
+                                .where(models.SimCard.sim_iccid == marge_data['iccid'])
+                                .values(block_start = marge_data["block_start"]))
 
                 session.commit()
 

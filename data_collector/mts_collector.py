@@ -14,7 +14,7 @@ from sim_operators_work.logger import logger as log
 # base_url = config.MTS_BASE_URL
 # username = config.MTS_USERNAME
 # password = config.MTS_PASSWORD
-# parent_tel_number = config.MTS_PARENT_TEL_NUMBER
+# #parent_tel_number = config.MTS_PARENT_TEL_NUMBER
 # account = config.MTS_ACCOUNT_NUMBER # Номер лицевого счёта
 #
 class MtsApi:
@@ -183,10 +183,10 @@ class MtsApi:
 
 
 
-# mts_api = MtsApi(base_url, username, password, accountNo=account)
+# mts_api = MtsApi(base_url, username, password, accountNo="")
 # mts_api.get_access_token()
 # # # #all_sims = mts_api.get_all_sims(parent_tel_number)
-# # # #structure_abonents = mts_api.get_structure_abonents(pageNum=1)
+# structure_abonents = mts_api.get_structure_abonents(pageNum=1)
 # # #
 # detail_service = mts_api.get_detail_service_from_tel_number("79159357944")
 # # # #detail_internet = mts_api.get_detail_internet_from_tel_number("79108933613")
@@ -198,7 +198,7 @@ class MtsApi:
 # result = {i["name"] for i in detail_service}
 # print(result)
 # #
-# with open('mts_detai_serv_79159357944.json', 'w', encoding='utf-8') as file:
-#     json.dump(detail_service, file, indent=2, ensure_ascii=False)
+# with open('mts_all_abon_1_page_scout.json', 'w', encoding='utf-8') as file:
+#     json.dump(structure_abonents, file, indent=2, ensure_ascii=False)
 
 

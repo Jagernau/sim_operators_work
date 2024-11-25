@@ -1,5 +1,5 @@
-import mts_entry
-
+#import mts_entry
+import clear_mts_entry
 import schedule
 import time
 from logger import logger as log 
@@ -10,7 +10,7 @@ def job():
     try:
         log.info("Начало обработки MTS")
 
-        mts_entry.mts_merge_data()
+        clear_mts_entry.mts_merge_data()
 
         log.info("Конец обработки MTS")
     except Exception as e:
