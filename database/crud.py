@@ -139,7 +139,7 @@ def update_one_sim(marge_data):
                                 models.SimCard.sim_iccid == marge_data["iccid"]
                                 ).first()[0],
                         field="status",
-                        old_value=int(sim_in_db.status),
+                        old_value=sim_in_db.status,
                         new_value=int(marge_data["status"]),
                         action="update",
                         sys_id=marge_data["operator"],
