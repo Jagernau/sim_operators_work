@@ -17,6 +17,16 @@ def get_all_sim_issid():
     session.close()
     return result
 
+def all_mts_sim_issid():
+    db = MysqlDatabase()
+    session = db.session
+    result = session.query(
+            models.SimCard.sim_iccid
+            ).filter(models.SimCard.sim_cell_operator == 1).all()
+    session.close()
+    return result
+
+
 def add_one_sim(marge_data):
     """
     Рекрусивно проверяет бд, 
@@ -222,3 +232,45 @@ def update_one_sim(marge_data):
 
         finally:
          session.close()
+
+
+
+def write_off_mts_sim(result_mts):
+    """
+    Списание сим МТС
+    """
+    unic_db_iccid = {item[0] for item in all_mts_sim_issid()}
+
+    # Внесение симки
+    db = MysqlDatabase()
+    session = db.session
+    for i in unic_db_iccid:
+        if str(i) not in result_mts:
+            try:
+                sim_in_db = session.query(models.SimCard).filter(models.SimCard.sim_iccid == str(i)).first()
+                changes = models.GlobalLogging(
+                        section_type="sim_card",
+                        edit_id=sim_in_db.sim_id,
+                        field="status",
+                        old_value=sim_in_db.status,
+                        new_value=0,
+                        action="update",
+                        sys_id=1,
+                        contragent_id=None
+                        )
+                session.add(changes)
+                session.commit()
+
+                session.execute(
+                                update(models.SimCard)
+                                .where(models.SimCard.sim_iccid == str(i))
+                                .values(status = 0))
+
+                session.commit()
+
+            except Exception as e:
+                log.error(f"В списании {i} возникла ошибка {e}")
+
+            finally:
+             session.close()
+

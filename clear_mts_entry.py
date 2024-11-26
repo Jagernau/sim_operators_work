@@ -62,6 +62,7 @@ def mts_merge_data():
     password = config.MTS_PASSWORD
     account_parent = config.MTS_ACCOUNT_NUMBER
     account_scout = config.MTS_ACCOUNT_NUMBER_SCOUT
+    all_sim_mts = []
 
     for account in [account_parent, account_scout]:
         mts_class = mts_collector.MtsApi(base_url, username, password, accountNo=account)
@@ -71,15 +72,36 @@ def mts_merge_data():
             try:
                 mts_class.get_access_token()
                 mts_data = mts_class.get_structure_abonents(page_count)
-                if not mts_data or not mts_data[0]["partyRole"][0]["customerAccount"][0]["href"] == "hasMore":
-                    log.error("Нет данных в текущей странице, переход на следующую")
+
+                try:
+                    next_page = mts_data[0]["partyRole"][0]["customerAccount"][0]["href"]
+                except Exception as e:
+                    log.error(f"Ошибка получения HREF значит страницы закончились: {e}")
                     break
+                else:
+                    if next_page != "hasMore":
+                        log.error("Нет данных в текущей странице, похоже что эта страница последняя")
+                        break
                 
-                all_sims = mts_data[0]["partyRole"][0]["customerAccount"][0]["productRelationship"]
-                process_sim_data(mts_class, all_sims)
-                page_count += 1
+                    all_sims = mts_data[0]["partyRole"][0]["customerAccount"][0]["productRelationship"]
+                    pages_data = process_sim_data(mts_class, all_sims)
+                    all_sim_mts.append(pages_data)
+                    page_count += 1
             
             except Exception as e:
                 log.error(f"Не удаётся получить данные с МТС в итерации цикла: {e}")
-                page_count += 1
+                break
 
+    prov_result = []
+    for i in all_sim_mts:
+        for x in i:
+            prov_result.append(x)
+
+    result = { z["iccid"] for z in prov_result }
+    try:
+        crud.write_off_mts_sim(result)
+    
+    except Exception as e:
+        log.error(f"Не удаётся изменить данные по списанию сим в БД {e}")
+    
+    
