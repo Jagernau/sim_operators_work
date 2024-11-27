@@ -1,6 +1,6 @@
 import database.mysql_models as models
 from database.db_conectors import MysqlDatabase
-from sqlalchemy import update
+from sqlalchemy import update, func
 
 import sys
 
@@ -294,4 +294,34 @@ def write_off_mts_sim(result_mts):
 
             finally:
              session.close()
+
+
+def dubles_beeline_clear():
+    db = MysqlDatabase()
+    session = db.session
+    cut_all_beeline_sims = session.query(models.SimCard).filter(
+            models.SimCard.sim_cell_operator==3,
+            func.length(models.SimCard.sim_iccid) < 19,
+            func.length(models.SimCard.sim_iccid) > 6,
+            models.SimCard.contragent_id != None,
+            ).all()
+
+    for cut in cut_all_beeline_sims:
+        full = session.query(models.SimCard).filter(
+                models.SimCard.sim_cell_operator == 3,
+                func.length(models.SimCard.sim_iccid) == 19,
+                models.SimCard.contragent_id == None,
+                models.SimCard.sim_iccid.like(f'%{cut.sim_iccid}%')
+                ).first()
+        if full:
+            session.execute(
+                            update(models.SimCard)
+                            .where(models.SimCard.sim_id == full.sim_id)
+                            .values(
+                                terminal_imei=cut.terminal_imei,
+                                contragent_id=cut.contragent_id
+                                )
+                            )
+            session.commit()
+    session.close()
 
