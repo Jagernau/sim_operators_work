@@ -41,7 +41,7 @@ def process_sim_data(mts_class, all_sims):
             "tel_num": tel_num,
             "iccid": iccid,
             'status': clear_block_status,
-            "block_start": block_status[0]['validFor']["startDateTime"] if clear_block_status != 1 else None
+            "block_start": str(block_status[0]['validFor']["startDateTime"]).split("T")[0] if clear_block_status != 1 else None
         })
 
         try:
