@@ -2,7 +2,7 @@ from time import sleep
 from data_collector import mts_collector
 from database import crud
 from help_funcs import mts_status_convert
-from logger import logger as log
+from mts_logger import logger as log
 import config
 
 def get_block_status(mts_class, tel_num):
@@ -92,16 +92,30 @@ def mts_merge_data():
                 log.error(f"Не удаётся получить данные с МТС в итерации цикла: {e}")
                 break
 
-    prov_result = []
-    for i in all_sim_mts:
-        for x in i:
-            prov_result.append(x)
-
-    result = { z["iccid"] for z in prov_result }
     try:
-        crud.write_off_mts_sim(result)
-    
+        mts_check = mts_collector.MtsApi(
+                config.MTS_BASE_URL, 
+                config.MTS_USERNAME,
+                config.MTS_PASSWORD,
+                config.MTS_ACCOUNT_NUMBER
+                )
+        mts_check.get_access_token()
+
     except Exception as e:
-        log.error(f"Не удаётся изменить данные по списанию сим в БД {e}")
+        log.error(f"Не удаётся получить токен для начала списания {e}")
+
+    else:
+
+        prov_result = []
+        for i in all_sim_mts:
+            for x in i:
+                prov_result.append(x)
+
+        result = { z["iccid"] for z in prov_result }
+        try:
+            crud.write_off_mts_sim(result)
+        
+        except Exception as e:
+            log.error(f"Не удаётся изменить данные по списанию сим в БД {e}")
     
     

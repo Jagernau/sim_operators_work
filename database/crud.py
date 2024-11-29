@@ -81,7 +81,7 @@ def add_one_sim(marge_data):
             session.commit()
 
         except Exception as e:
-            log.error(f"В добавлении сим по одному возникла ошибка {e}")
+            print(f"В добавлении сим по одному возникла ошибка {e}")
         finally:
             session.close()
 
@@ -137,7 +137,7 @@ def update_one_sim(marge_data):
                 session.commit()
 
         except Exception as e:
-            log.error(f"В обновлении сим ТЕЛЕФОНА возникла ошибка {e}")
+            print(f"В обновлении сим ТЕЛЕФОНА возникла ошибка {e}")
 
         try:
             if sim_in_db.status != int(marge_data['status']):
@@ -166,7 +166,7 @@ def update_one_sim(marge_data):
                                 .values(status = marge_data['status']))
                 session.commit()
         except Exception as e:
-            log.error(f"В обновлении сим СТАТУСА возникла ошибка {e}")
+            print(f"В обновлении сим СТАТУСА возникла ошибка {e}")
 
         try:
             if int(sim_in_db.sim_cell_operator) != int(marge_data['operator']):
@@ -197,7 +197,7 @@ def update_one_sim(marge_data):
                 session.commit()
 
         except Exception as e:
-            log.error(f"В обновлении сим ОПЕРАТОРА возникла ошибка {e}")
+            print(f"В обновлении сим ОПЕРАТОРА возникла ошибка {e}")
 
         try:
             if sim_in_db.block_start != marge_data["block_start"] :
@@ -228,7 +228,7 @@ def update_one_sim(marge_data):
                 session.commit()
 
         except Exception as e:
-            log.error(f"В обновлении сим ОПЕРАТОРА возникла ошибка {e}")
+            print(f"В обновлении сим ОПЕРАТОРА возникла ошибка {e}")
 
         finally:
          session.close()
@@ -290,25 +290,25 @@ def write_off_mts_sim(result_mts):
 
 
             except Exception as e:
-                log.error(f"В списании {i} возникла ошибка {e}")
+                print(f"В списании {i} возникла ошибка {e}")
 
             finally:
              session.close()
 
 
-def dubles_beeline_clear():
+def dubles_sim_clear():
     db = MysqlDatabase()
     session = db.session
-    cut_all_beeline_sims = session.query(models.SimCard).filter(
-            models.SimCard.sim_cell_operator==3,
+    cut_all_sims = session.query(models.SimCard).filter(
+            models.SimCard.sim_cell_operator==1,
             func.length(models.SimCard.sim_iccid) < 19,
             func.length(models.SimCard.sim_iccid) > 6,
             models.SimCard.contragent_id != None,
             ).all()
 
-    for cut in cut_all_beeline_sims:
+    for cut in cut_all_sims:
         full = session.query(models.SimCard).filter(
-                models.SimCard.sim_cell_operator == 3,
+                models.SimCard.sim_cell_operator == 1,
                 func.length(models.SimCard.sim_iccid) == 19,
                 models.SimCard.contragent_id == None,
                 models.SimCard.sim_iccid.like(f'%{cut.sim_iccid}%')

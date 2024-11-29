@@ -1,0 +1,8 @@
+2024-11-29 17:10:28,415 - INFO - Начала потока MTS
+2024-11-29 17:10:30,417 - INFO - Начало обращения к МТС для получения токена
+2024-11-29 17:12:43,720 - ERROR - Не удаётся получить данные с МТС в итерации цикла: HTTPSConnectionPool(host='api.mts.ru', port=443): Max retries exceeded with url: /token (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x75a22ba151e0>, 'Connection to api.mts.ru timed out. (connect timeout=None)'))
+2024-11-29 17:12:45,722 - INFO - Начало обращения к МТС для получения токена
+2024-11-29 17:14:58,893 - ERROR - Не удаётся получить данные с МТС в итерации цикла: HTTPSConnectionPool(host='api.mts.ru', port=443): Max retries exceeded with url: /token (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x75a229d4f190>, 'Connection to api.mts.ru timed out. (connect timeout=None)'))
+2024-11-29 17:15:00,896 - INFO - Начало обращения к МТС для получения токена
+2024-11-29 17:17:14,056 - ERROR - Не удаётся получить токен для начала списания HTTPSConnectionPool(host='api.mts.ru', port=443): Max retries exceeded with url: /token (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x75a229de7f10>, 'Connection to api.mts.ru timed out. (connect timeout=None)'))
+2024-11-29 17:17:14,056 - INFO - Конец потока MTS

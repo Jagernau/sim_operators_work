@@ -1,7 +1,7 @@
 from time import sleep
 from data_collector import beeline_collector
 from database import crud
-from logger import logger as log
+from beeline_logger import logger as log
 import config
 from help_funcs import beeline_status_convert
 

@@ -5,7 +5,7 @@ import json
 import sys
 
 sys.path.append('../')
-from sim_operators_work.logger import logger as log
+from sim_operators_work.mts_logger import logger as log
 
 # from sim_operators_work import config as config
 # from sim_operators_work import help_funcs
