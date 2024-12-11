@@ -41,7 +41,7 @@ def process_sim_data(mts_class, all_sims):
             "tel_num": tel_num,
             "iccid": iccid,
             'status': clear_block_status,
-            "block_start": str(block_status[0]['validFor']["startDateTime"]).split("T")[0] if clear_block_status != 1 else None
+            "block_start": str(str(block_status[0]['validFor']["startDateTime"]).split("T")[0]) + " 00:00:00" if clear_block_status != 1 else None
         })
 
         try:
@@ -72,7 +72,10 @@ def mts_merge_data():
             try:
                 mts_class.get_access_token()
                 mts_data = mts_class.get_structure_abonents(page_count)
-
+            except Exception as e:
+                log.error(f"Не удаётся получить данные с МТС в итерации цикла: {e}")
+                continue
+            else:
                 try:
                     next_page = mts_data[0]["partyRole"][0]["customerAccount"][0]["href"]
                 except Exception as e:
@@ -88,9 +91,6 @@ def mts_merge_data():
                     all_sim_mts.append(pages_data)
                     page_count += 1
             
-            except Exception as e:
-                log.error(f"Не удаётся получить данные с МТС в итерации цикла: {e}")
-                break
 
     try:
         mts_check = mts_collector.MtsApi(

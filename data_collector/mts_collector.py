@@ -7,16 +7,6 @@ import sys
 sys.path.append('../')
 from sim_operators_work.mts_logger import logger as log
 
-# from sim_operators_work import config as config
-# from sim_operators_work import help_funcs
-#
-# # Настройки
-# base_url = config.MTS_BASE_URL
-# username = config.MTS_USERNAME
-# password = config.MTS_PASSWORD
-# #parent_tel_number = config.MTS_PARENT_TEL_NUMBER
-# account = config.MTS_ACCOUNT_NUMBER # Номер лицевого счёта
-#
 class MtsApi:
     def __init__(self, base_url, username, password, accountNo):
         """ 
@@ -64,7 +54,7 @@ class MtsApi:
         sleep(2)
         log.info(f"Начало обращения к МТС для получения СИМ")
 
-        url = f"{self.base_url}/b2b/v1/Service/HierarchyStructure?account={int(self.accountNo)}&pageNum={int(pageNum)}&pageSize=50"
+        url = f"{self.base_url}/b2b/v1/Service/HierarchyStructure?account={int(self.accountNo)}&pageNum={int(pageNum)}&pageSize=10"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.access_token}",

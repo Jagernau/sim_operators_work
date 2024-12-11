@@ -5,19 +5,10 @@ import sys
 from time import sleep
 
 sys.path.append('../')
-from sim_operators_work.logger import logger as log
+from sim_operators_work.beeline_logger import logger as log
 from sim_operators_work import config as config
 from sim_operators_work import help_funcs
 
-
-
-# # # Настройки
-# base_url = config.BILINE_BASE_URL
-# client_id = config.BILINE_CLIENT_ID
-# client_secret = config.BILINE_CLIENT_SECRET
-# username = config.BILINE_USERNAME
-# password = config.BILINE_PASSWORD
-# dashboard_id = config.BILINE_DASHBORD
 
 class BilineApi:
     def __init__(self, base_url, client_id, client_secret, username, password):

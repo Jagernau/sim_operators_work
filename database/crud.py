@@ -1,7 +1,7 @@
 import database.mysql_models as models
 from database.db_conectors import MysqlDatabase
 from sqlalchemy import update, func
-
+from datetime import datetime
 import sys
 
 sys.path.append('../')
@@ -26,6 +26,14 @@ def all_mts_sim_issid():
     session.close()
     return result
 
+def get_all_mts():
+    db = MysqlDatabase()
+    session = db.session
+    result = session.query(
+            models.SimCard
+            ).filter(models.SimCard.sim_cell_operator == 1).all()
+    session.close()
+    return result
 
 def add_one_sim(marge_data):
     """
@@ -200,7 +208,8 @@ def update_one_sim(marge_data):
             print(f"В обновлении сим ОПЕРАТОРА возникла ошибка {e}")
 
         try:
-            if sim_in_db.block_start != marge_data["block_start"] :
+            date = datetime.strptime(str(marge_data["block_start"]), "%Y-%m-%d %H:%M:%S") if marge_data["block_start"] != None else None
+            if sim_in_db.block_start != date:
                 changes = models.GlobalLogging(
                         section_type="sim_card",
                         edit_id=session.query(
@@ -212,7 +221,7 @@ def update_one_sim(marge_data):
                                 ).first()[0],
                         field="block_start",
                         old_value=sim_in_db.block_start,
-                        new_value=marge_data["block_start"],
+                        new_value=date,
                         action="update",
                         sys_id=marge_data["operator"],
                         contragent_id=None
@@ -223,7 +232,7 @@ def update_one_sim(marge_data):
                 session.execute(
                                 update(models.SimCard)
                                 .where(models.SimCard.sim_iccid == marge_data['iccid'])
-                                .values(block_start = marge_data["block_start"]))
+                                .values(block_start = date))
 
                 session.commit()
 
