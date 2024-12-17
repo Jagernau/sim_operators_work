@@ -309,28 +309,27 @@ def dubles_sim_clear():
     db = MysqlDatabase()
     session = db.session
     cut_all_sims = session.query(models.SimCard).filter(
-            models.SimCard.sim_cell_operator==1,
-            func.length(models.SimCard.sim_iccid) < 19,
-            func.length(models.SimCard.sim_iccid) > 6,
+            models.SimCard.sim_cell_operator==2,
+            models.SimCard.sim_iccid == None,
             models.SimCard.contragent_id != None,
             ).all()
 
     for cut in cut_all_sims:
         full = session.query(models.SimCard).filter(
-                models.SimCard.sim_cell_operator == 1,
+                models.SimCard.sim_cell_operator == 2,
                 func.length(models.SimCard.sim_iccid) == 19,
                 models.SimCard.contragent_id == None,
-                models.SimCard.sim_iccid.like(f'%{cut.sim_iccid}%')
+                models.SimCard.sim_iccid == cut.sim_tel_number)
                 ).first()
         if full:
             session.execute(
                             update(models.SimCard)
                             .where(models.SimCard.sim_id == full.sim_id)
                             .values(
-                                terminal_imei=cut.terminal_imei,
                                 contragent_id=cut.contragent_id
                                 )
                             )
             session.commit()
+
     session.close()
 
