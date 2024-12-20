@@ -45,6 +45,8 @@ def tele2_merge_data():
                         # если телефон не пустой ''
                         if phone != 'Номерабонента' and phone != None:
                            detail_info = tele_two_parser.go_detail_page_get_info(phone)
+                           if detail_info == None:
+                               continue
                            log.info(f"Обработанна страница {page}, Телефон {phone}")
                            if detail_info['iccid'] and detail_info['status']:
                                marge_data = {}

@@ -1,10 +1,11 @@
 
-#from database import crud
+# from database import crud
 # from datetime import datetime
-#
+# #
 # start = datetime.now()
-#data = crud.get_all_mts()
+# crud.dubles_sim_clear()
 # end = datetime.now()
+# print(end - start)
 #
 # for i in data:
 #     print(i.block_start)
