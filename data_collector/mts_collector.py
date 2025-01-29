@@ -68,6 +68,31 @@ class MtsApi:
             raise ValueError('Не получает ИНФО ПО СИМ')
 
 
+    def get_from_contract_structure_abonents(self, contractNum: int): # Получение лицевых счетов
+        """ 
+        Метод для получения лицевых счетов по Договору
+        Принимает:
+        1 Номер лицевого счёта self
+        2 Номер страницы
+        :return: dict
+
+        """
+        sleep(2)
+        log.info(f"Начало обращения к МТС для получения СИМ")
+
+        url = f"{self.base_url}/b2b/v1/Service/HierarchyStructure?contract={contractNum}"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.access_token}",
+        }
+        response = requests.get(url=url, headers=headers)
+        if response.status_code == 200:
+            log.info(f"Получены данные по всем сим страница {response.status_code}")
+            return response.json()
+        else:
+            log.error(f"Данные по МТС не полученны со страницы {response.status_code}")
+            raise ValueError('Не получает ИНФО ПО СИМ')
+
     def get_detail_internet_from_tel_number(self, tel_number): # Полный хаос не понятно
         """ 
         Метод предназначен для получения информации об остатках пакетов минут, интернет, SMS.

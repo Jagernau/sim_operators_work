@@ -112,7 +112,13 @@ def mts_merge_data():
                 prov_result.append(x)
 
         result = { z["iccid"] for z in prov_result }
+        phones = { p["tel_num"] for p in prov_result }
         try:
+            count = 0
+            for phone in phones:
+                mts_check.get_detail_blocks_from_tel_number(phone)
+                count += 1
+                if count == 10: break
             crud.write_off_mts_sim(result)
         
         except Exception as e:
