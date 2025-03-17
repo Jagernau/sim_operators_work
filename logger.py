@@ -4,7 +4,7 @@ logger.setLevel(logging.INFO)
 
 
 # Создание обработчика для записи в файл
-file_handler = logging.FileHandler('log.txt')
+file_handler = logging.FileHandler('17_log.txt')
 file_handler.setLevel(logging.INFO)
 
 

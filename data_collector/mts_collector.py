@@ -198,22 +198,19 @@ class MtsApi:
 
 
 
-# mts_api = MtsApi(base_url, username, password, accountNo="")
+# mts_api = MtsApi(base_url=conf.MTS_BASE_URL, username=conf.MTS_USERNAME, password=conf.MTS_PASSWORD, accountNo=conf.MTS_ACCOUNT_NUMBER)
 # mts_api.get_access_token()
 # # # #all_sims = mts_api.get_all_sims(parent_tel_number)
 # structure_abonents = mts_api.get_structure_abonents(pageNum=1)
 # # #
-# detail_service = mts_api.get_detail_service_from_tel_number("79159357944")
 # # # #detail_internet = mts_api.get_detail_internet_from_tel_number("79108933613")
 # # # detail_blocks = mts_api.get_detail_blocks_from_tel_number("79867505908")
 # # # #detail_location = mts_api.get_detail_location_from_tel_number()
 # # # #top_tarif = mts_api.get_top_tarif_from_tel_number("79101313428")
 # # # #get_all_services = mts_api.get_all_services()
 #
-# result = {i["name"] for i in detail_service}
-# print(result)
 # #
-# with open('mts_all_abon_1_page_scout.json', 'w', encoding='utf-8') as file:
+# with open('mts_all_abon_10_03_page.json', 'w', encoding='utf-8') as file:
 #     json.dump(structure_abonents, file, indent=2, ensure_ascii=False)
-
+#
 

@@ -6,6 +6,8 @@ from mts_logger import logger as log
 import config
 
 def get_block_status(mts_class, tel_num):
+    "Получение статуса сим МТС"
+    block_status = None
     try:
         log.info("Начало получения статуса сим MTS")
         block_status = mts_class.get_detail_blocks_from_tel_number(str(tel_num))
@@ -19,30 +21,38 @@ def get_block_status(mts_class, tel_num):
             log.error("Повторная попытка получения блокировок сим успешно прошла")
         except Exception as e:
             log.error(f"Ошибка при повторной попытке получения блокировок: {e}")
-            return None
-    return block_status
+    finally:
+        return block_status
 
 def process_sim_data(mts_class, all_sims):
-    json_data = []
+    iccids_len = []
     for i in all_sims:
         marge = {}
         tel_num = i["product"]["productSerialNumber"]
         iccid = str(i["product"]["productCharacteristic"][1]["value"])[:-1]
 
         block_status = get_block_status(mts_class, tel_num)
-        if block_status is None:
-            continue
+        if block_status == None:
+            marge.update({
+                "operator": 1,
+                "owner": 1,
+                "tel_num": tel_num,
+                "iccid": iccid,
+                'status': 4,
+                "block_start": None
+            })
 
-        clear_block_status = 1 if len(block_status) == 0 else mts_status_convert(block_status[0]["name"])
-        
-        marge.update({
-            "operator": 1,
-            "owner": 1,
-            "tel_num": tel_num,
-            "iccid": iccid,
-            'status': clear_block_status,
-            "block_start": str(str(block_status[0]['validFor']["startDateTime"]).split("T")[0]) + " 00:00:00" if clear_block_status != 1 else None
-        })
+        else:
+            clear_block_status = 1 if len(block_status) == 0 else mts_status_convert(block_status[0]["name"])
+            
+            marge.update({
+                "operator": 1,
+                "owner": 1,
+                "tel_num": tel_num,
+                "iccid": iccid,
+                'status': clear_block_status,
+                "block_start": str(str(block_status[0]['validFor']["startDateTime"]).split("T")[0]) + " 00:00:00" if clear_block_status != 1 else None
+            })
 
         try:
             log.info("Начало попытки записи в БД")
@@ -52,9 +62,9 @@ def process_sim_data(mts_class, all_sims):
         except Exception as e:
             log.error(f"Ошибка записи в БД: {e}")
 
-        json_data.append(marge)
+        iccids_len.append(marge['iccid'])
 
-    return json_data
+    return iccids_len
 
 def mts_merge_data():
     base_url = config.MTS_BASE_URL
@@ -62,7 +72,7 @@ def mts_merge_data():
     password = config.MTS_PASSWORD
     account_parent = config.MTS_ACCOUNT_NUMBER
     account_scout = config.MTS_ACCOUNT_NUMBER_SCOUT
-    all_sim_mts = []
+    all_sim_mts_pages = []
 
     for account in [account_parent, account_scout]:
         mts_class = mts_collector.MtsApi(base_url, username, password, accountNo=account)
@@ -74,6 +84,7 @@ def mts_merge_data():
                 mts_data = mts_class.get_structure_abonents(page_count)
             except Exception as e:
                 log.error(f"Не удаётся получить данные с МТС в итерации цикла: {e}")
+                all_sim_mts_pages.append(None)
                 continue
             else:
                 try:
@@ -88,10 +99,9 @@ def mts_merge_data():
                 
                     all_sims = mts_data[0]["partyRole"][0]["customerAccount"][0]["productRelationship"]
                     pages_data = process_sim_data(mts_class, all_sims)
-                    all_sim_mts.append(pages_data)
+                    all_sim_mts_pages.append(pages_data)
                     page_count += 1
             
-
     try:
         mts_check = mts_collector.MtsApi(
                 config.MTS_BASE_URL, 
@@ -105,23 +115,19 @@ def mts_merge_data():
         log.error(f"Не удаётся получить токен для начала списания {e}")
 
     else:
+        log.info(all_sim_mts_pages)
+        all_iccids_set = set()
+        if None not in all_sim_mts_pages:
+            for page in all_sim_mts_pages:
+                for val in page:
+                    all_iccids_set.add(val)
+                    
 
-        prov_result = []
-        for i in all_sim_mts:
-            for x in i:
-                prov_result.append(x)
-
-        result = { z["iccid"] for z in prov_result }
-        phones = { p["tel_num"] for p in prov_result }
-        try:
-            count = 0
-            for phone in phones:
-                mts_check.get_detail_blocks_from_tel_number(phone)
-                count += 1
-                if count == 10: break
-            crud.write_off_mts_sim(result)
-        
-        except Exception as e:
-            log.error(f"Не удаётся изменить данные по списанию сим в БД {e}")
+            log.info(len(all_iccids_set))
+            try:
+                crud.write_off_mts_sim(all_iccids_set)
+            
+            except Exception as e:
+                log.error(f"Не удаётся изменить данные по списанию сим в БД {e}")
     
     
