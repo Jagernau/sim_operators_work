@@ -1,11 +1,11 @@
 import clear_mts_entry
-# import beeline_entry
-# import tele2_entry
+import beeline_entry
+import tele2_entry
 import schedule
 import time
 from mts_logger import logger as mts_log 
-# from beeline_logger import logger as beeline_log 
-# from tele2_logger import logger as tele2_logger 
+from beeline_logger import logger as beeline_log 
+from tele2_logger import logger as tele2_logger 
 import threading
 
 def process_mts():
@@ -45,7 +45,6 @@ def job():
     beeline_thread.join()
     tele2_thread.join()
 
-job()
 
 if __name__ == '__main__':
     # Запланировать выполнение job() каждый день в 23:40
