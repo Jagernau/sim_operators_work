@@ -248,7 +248,7 @@ def write_off_mts_sim(result_mts):
     """
     Списание сим МТС
     """
-    unic_db_iccid = {item[0] for item in all_mts_sim_issid()}
+    unic_db_iccid = [item[0] for item in all_mts_sim_issid()]
 
     # Внесение симки
     db = MysqlDatabase()
