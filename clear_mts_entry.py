@@ -63,71 +63,73 @@ def process_sim_data(mts_class, all_sims):
         except Exception as e:
             log.error(f"Ошибка записи в БД: {e}")
 
-
     return iccids_len
 
-def mts_merge_data():
+
+def write_off(full_all_accounts_data: list):
+    all_iccids_set = []
+    check_none = []
+    for account_data in full_all_accounts_data:
+        if None not in account_data:
+            for page in account_data:
+                for val in page:
+                    all_iccids_set.append(val)
+        if None in account_data:
+            check_none.append(None)
+
+                    
+    log.info(len(all_iccids_set))
+    try:
+        if None not in check_none and len(all_iccids_set) >= 1:
+            crud.write_off_mts_sim(all_iccids_set)
+    
+    except Exception as e:
+        log.error(f"Не удаётся изменить данные по списанию сим в БД {e}")
+
+def get_mts_pages(account):
     base_url = config.MTS_BASE_URL
     username = config.MTS_USERNAME
     password = config.MTS_PASSWORD
-    account_parent = config.MTS_ACCOUNT_NUMBER
-    account_scout = config.MTS_ACCOUNT_NUMBER_SCOUT
+    mts_class = mts_collector.MtsApi(base_url, username, password, accountNo=account)
+    page_count = 0
+    sim_mts_pages = []
+    
+    while True:
+        try:
+            mts_class.get_access_token()
+            mts_data = mts_class.get_structure_abonents(page_count)
+            all_sims = mts_data[0]["partyRole"][0]["customerAccount"][0]["productRelationship"]
+            pages_data = process_sim_data(mts_class, all_sims)
+            sim_mts_pages.append(pages_data)
+            page_count += 1
+        except Exception as e:
+            log.error(f"Не удаётся получить данные с МТС в итерации цикла: {e}")
+            sim_mts_pages.append(None)
+            continue
+        else:
+            try:
+                next_page = mts_data[0]["partyRole"][0]["customerAccount"][0]["href"]
+            except Exception as e:
+                log.error(f"Ошибка получения HREF значит страницы закончились: {e}")
+                break
+            else:
+                if next_page != "hasMore":
+                    log.error("Нет данных в текущей странице, похоже что эта страница последняя")
+                    break
+
+    return sim_mts_pages
+
+
+
+def mts_merge_data():
+    accounts = [
+            config.MTS_ACCOUNT_NUMBER, 
+            config.MTS_ACCOUNT_NUMBER_SCOUT
+            ]
     all_sim_mts_pages = []
 
-    for account in [account_parent, account_scout]:
-        mts_class = mts_collector.MtsApi(base_url, username, password, accountNo=account)
-        page_count = 0
-        
-        while True:
-            try:
-                mts_class.get_access_token()
-                mts_data = mts_class.get_structure_abonents(page_count)
-                all_sims = mts_data[0]["partyRole"][0]["customerAccount"][0]["productRelationship"]
-                pages_data = process_sim_data(mts_class, all_sims)
-                all_sim_mts_pages.append(pages_data)
-                page_count += 1
-            except Exception as e:
-                log.error(f"Не удаётся получить данные с МТС в итерации цикла: {e}")
-                all_sim_mts_pages.append(None)
-                continue
-            else:
-                try:
-                    next_page = mts_data[0]["partyRole"][0]["customerAccount"][0]["href"]
-                except Exception as e:
-                    log.error(f"Ошибка получения HREF значит страницы закончились: {e}")
-                    break
-                else:
-                    if next_page != "hasMore":
-                        log.error("Нет данных в текущей странице, похоже что эта страница последняя")
-                        break
-                
-            
-    try:
-        mts_check = mts_collector.MtsApi(
-                config.MTS_BASE_URL, 
-                config.MTS_USERNAME,
-                config.MTS_PASSWORD,
-                config.MTS_ACCOUNT_NUMBER
-                )
-        mts_check.get_access_token()
+    for account in accounts:
+        all_sim_mts_pages.append(get_mts_pages(account))
 
-    except Exception as e:
-        log.error(f"Не удаётся получить токен для начала списания {e}")
+    write_off(all_sim_mts_pages)
 
-    else:
-        log.info(all_sim_mts_pages)
-        all_iccids_set = []
-        if None not in all_sim_mts_pages:
-            for page in all_sim_mts_pages:
-                for val in page:
-                    all_iccids_set.append(val)
-                    
-
-            log.info(len(all_iccids_set))
-            try:
-                crud.write_off_mts_sim(all_iccids_set)
-            
-            except Exception as e:
-                log.error(f"Не удаётся изменить данные по списанию сим в БД {e}")
-    
-    
