@@ -30,6 +30,7 @@ def process_sim_data(mts_class, all_sims):
         marge = {}
         tel_num = i["product"]["productSerialNumber"]
         iccid = str(i["product"]["productCharacteristic"][1]["value"])[:-1]
+        iccids_len.append(iccid)
 
         block_status = get_block_status(mts_class, tel_num)
         if block_status == None:
@@ -62,7 +63,6 @@ def process_sim_data(mts_class, all_sims):
         except Exception as e:
             log.error(f"Ошибка записи в БД: {e}")
 
-        iccids_len.append(marge['iccid'])
 
     return iccids_len
 
@@ -82,6 +82,10 @@ def mts_merge_data():
             try:
                 mts_class.get_access_token()
                 mts_data = mts_class.get_structure_abonents(page_count)
+                all_sims = mts_data[0]["partyRole"][0]["customerAccount"][0]["productRelationship"]
+                pages_data = process_sim_data(mts_class, all_sims)
+                all_sim_mts_pages.append(pages_data)
+                page_count += 1
             except Exception as e:
                 log.error(f"Не удаётся получить данные с МТС в итерации цикла: {e}")
                 all_sim_mts_pages.append(None)
@@ -97,10 +101,6 @@ def mts_merge_data():
                         log.error("Нет данных в текущей странице, похоже что эта страница последняя")
                         break
                 
-                    all_sims = mts_data[0]["partyRole"][0]["customerAccount"][0]["productRelationship"]
-                    pages_data = process_sim_data(mts_class, all_sims)
-                    all_sim_mts_pages.append(pages_data)
-                    page_count += 1
             
     try:
         mts_check = mts_collector.MtsApi(
@@ -116,11 +116,11 @@ def mts_merge_data():
 
     else:
         log.info(all_sim_mts_pages)
-        all_iccids_set = set()
+        all_iccids_set = []
         if None not in all_sim_mts_pages:
             for page in all_sim_mts_pages:
                 for val in page:
-                    all_iccids_set.add(val)
+                    all_iccids_set.append(val)
                     
 
             log.info(len(all_iccids_set))

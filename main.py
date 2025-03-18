@@ -48,7 +48,7 @@ def job():
 
 if __name__ == '__main__':
     # Запланировать выполнение job() каждый день в 23:40
-    schedule.every().day.at("17:00").do(job)
+    schedule.every().day.at("18:00").do(job)
 
     while True:
         schedule.run_pending()
