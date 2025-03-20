@@ -6,7 +6,7 @@ import time
 from mts_logger import logger as mts_log 
 from beeline_logger import logger as beeline_log 
 from tele2_logger import logger as tele2_logger 
-import threading
+import multiprocessing
 
 def process_mts():
     try:
@@ -33,9 +33,9 @@ def process_tele2():
         tele2_logger.error(f"В обработке потока Теле2 возникла ошибка {e}")
 
 def job():
-    mts_thread = threading.Thread(target=process_mts)
-    beeline_thread = threading.Thread(target=process_beeline)
-    tele2_thread = threading.Thread(target=process_tele2)
+    mts_thread = multiprocessing.Process(target=process_mts)
+    beeline_thread = multiprocessing.Process(target=process_beeline)
+    tele2_thread = multiprocessing.Process(target=process_tele2)
 
     mts_thread.start()
     beeline_thread.start()
@@ -48,7 +48,7 @@ def job():
 
 if __name__ == '__main__':
     # Запланировать выполнение job() каждый день в 23:40
-    schedule.every().day.at("18:00").do(job)
+    schedule.every().day.at("10:30").do(job)
 
     while True:
         schedule.run_pending()
