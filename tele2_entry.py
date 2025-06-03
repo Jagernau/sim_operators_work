@@ -43,7 +43,7 @@ def tele2_merge_data():
                     phones = i['phones']
                     for phone in phones:
                         # если телефон не пустой ''
-                        if phone != 'Номерабонента' and phone != None:
+                        if phone != 'Номерабонента' and phone != None and phone !="":
                            detail_info = tele_two_parser.go_detail_page_get_info(phone)
                            if detail_info == None:
                                continue

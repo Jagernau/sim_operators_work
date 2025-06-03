@@ -46,8 +46,9 @@ def job():
     tele2_thread.join()
 
 
+
 if __name__ == '__main__':
-    # Запланировать выполнение job() каждый день в 23:40
+    # Запланировать выполнение job() каждый день в 10:30
     schedule.every().day.at("10:30").do(job)
 
     while True:
