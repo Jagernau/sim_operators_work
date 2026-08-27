@@ -39,11 +39,11 @@ def job():
 
     mts_thread.start()
     beeline_thread.start()
-    tele2_thread.start()
+    # tele2_thread.start()
 
     mts_thread.join()
     beeline_thread.join()
-    tele2_thread.join()
+    # tele2_thread.join()
 
 
 
