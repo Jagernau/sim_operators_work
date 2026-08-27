@@ -7,6 +7,7 @@ services:
       - "4442:4442" # Порт для событий
       - "4443:4443" # Порт для событий
       - "4444:4444" # Порт для управления хабом
+    restart: always
 
   chrome:
     image: selenium/node-chrome:beta
@@ -20,6 +21,7 @@ services:
       - SE_VNC_NO_PASSWORD=1  # Отключает запрос пароля для VNC
     ports:
       - "5900:5900"  # Проброс порта VNC для Chrome
+    restart: always
 
   edge:
     image: selenium/node-edge:beta

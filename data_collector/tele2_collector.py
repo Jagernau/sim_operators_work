@@ -208,6 +208,7 @@ class TeleTwoParser:
             return None
         else:
             try:
+                time.sleep(random.randint(5, 10))
                 status_element = self.browser.find_element(By.CSS_SELECTOR, "span.subscriber-profile-slot__status")
                 iccid_element = self.browser.find_element(By.CSS_SELECTOR, "span.subscriber-profile-slot__sim")
             except Exception as ex:

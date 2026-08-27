@@ -6,7 +6,6 @@ click==8.1.7
 emoji==2.8.0
 exceptiongroup==1.2.2
 future==0.18.3
-greenlet==2.0.2
 h11==0.14.0
 idna==3.4
 inflect==7.0.0

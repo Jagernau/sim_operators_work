@@ -39,16 +39,16 @@ def job():
 
     mts_thread.start()
     beeline_thread.start()
-    tele2_thread.start()
+    # tele2_thread.start()
 
     mts_thread.join()
     beeline_thread.join()
-    tele2_thread.join()
+    # tele2_thread.join()
 
-job()
+
 
 if __name__ == '__main__':
-    # Запланировать выполнение job() каждый день в 23:40
+    # Запланировать выполнение job() каждый день в 10:30
     schedule.every().day.at("10:30").do(job)
 
     while True:
