@@ -1,4 +1,5 @@
 from os import environ as envi
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -25,11 +26,34 @@ TELE_TWO_PASSWORD = envi.get('TELE_TWO_PASSWORD')
 
 USER_IP = envi.get('USER_IP')
 
-DB_HOST=envi.get('DB_HOST')
-MYSQL_USER=envi.get('MYSQL_USER')
-MYSQL_DB_NAME=envi.get('MYSQL_DB_NAME')
-MYSQL_PASSWORD=envi.get('MYSQL_PASSWORD')
-MYSQL_PORT=envi.get('MYSQL_PORT')
+DB_HOST = envi.get('DB_HOST')
+MYSQL_USER = envi.get('MYSQL_USER')
+MYSQL_DB_NAME = envi.get('MYSQL_DB_NAME')
+MYSQL_PASSWORD = envi.get('MYSQL_PASSWORD')
+MYSQL_PORT = envi.get('MYSQL_PORT')
 
-connection_mysql = f"mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_PASSWORD}@{DB_HOST}:{MYSQL_PORT}/{MYSQL_DB_NAME}"
+connection_mysql = (
+    f"mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_PASSWORD}@{DB_HOST}:{MYSQL_PORT}/{MYSQL_DB_NAME}"
+)
 
+# --------------------------------------------------------------------------- #
+#  Темп обращений к API. Подбирается скриптом tools/measure_api_limits.py.
+#  Лимиты МТС не опубликованы и зависят от пакета; Билайн отдаёт
+#  X-RateLimit-Limit в заголовках, и программа подстраивается под него сама.
+# --------------------------------------------------------------------------- #
+
+MTS_RATE_PER_MIN = envi.get('MTS_RATE_PER_MIN')          # по умолчанию 30
+MTS_PAGE_SIZE = envi.get('MTS_PAGE_SIZE')                # по умолчанию 100
+
+BILINE_RATE_PER_MIN = envi.get('BILINE_RATE_PER_MIN')    # по умолчанию 60
+BILINE_PAGE_SIZE = envi.get('BILINE_PAGE_SIZE')          # по умолчанию 200
+
+# Добор IMEI устройства у Билайна — отдельный запрос на симку.
+BILINE_DETECT_DEVICE = envi.get('BILINE_DETECT_DEVICE')              # 1 — включить
+BILINE_DEVICE_REFRESH_DAYS = envi.get('BILINE_DEVICE_REFRESH_DAYS')  # по умолчанию 7
+BILINE_DETECT_LIMIT = envi.get('BILINE_DETECT_LIMIT')                # по умолчанию 500 за прогон
+
+# --------------------------------------------------------------------------- #
+#  Логи (читаются напрямую в logging_setup.py)
+#     LOG_DIR, LOG_LEVEL, LOG_MAX_BYTES, LOG_BACKUPS, LOG_STDOUT
+# --------------------------------------------------------------------------- #
