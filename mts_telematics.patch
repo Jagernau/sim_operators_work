@@ -1,0 +1,185 @@
+--- a/clear_mts_entry.py
++++ b/clear_mts_entry.py
+@@ -88,6 +88,26 @@
+         stat.inc("ошибок запроса блокировок")
+         log.debug(f"МТС: блокировки {tel_num} — {e}")
+         return None
++
++
++def _telematics_flag(services) -> int:
++    """Проверка по коду МТС или полному названию из списка подключённых услуг."""
++    if not isinstance(services, list):
++        raise ValueError("ожидался список услуг")
++    incomplete = False
++    for service in services:
++        if isinstance(service, dict):
++            name = service.get("name")
++            if service.get("externalID") == "PE22816":
++                return 1
++            if isinstance(name, str) and name.strip():
++                if " ".join(name.casefold().split()) == "телематика. пакет 100 мб":
++                    return 1
++                continue
++        incomplete = True
++    if incomplete:
++        raise ValueError("в списке услуг есть запись без названия")
++    return 0
+ 
+ 
+ def _process_page(api, session, known, all_sims, stat: Stat) -> list[str]:
+@@ -127,23 +147,28 @@
+             stat.note(f"незнакомый код блокировки {block_code} у {tel_num}")
+             stat.inc("незнакомых кодов блокировок")
+ 
+-        crud.upsert_sim(
+-            session,
+-            known,
+-            {
+-                "operator": OPERATOR_ID,
+-                "owner": 1,
+-                "source": "mts",
+-                "tel_num": tel_num,
+-                "iccid": iccid,
+-                "status": status,
+-                "block_start": block_start,
+-                "block_end": block_end,
+-                "operator_block_code": block_code,
+-                "sim_imsi": imsi,
+-            },
+-            stat,
+-        )
++        sim_data = {
++            "operator": OPERATOR_ID,
++            "owner": 1,
++            "source": "mts",
++            "tel_num": tel_num,
++            "iccid": iccid,
++            "status": status,
++            "block_start": block_start,
++            "block_end": block_end,
++            "operator_block_code": block_code,
++            "sim_imsi": imsi,
++        }
++        try:
++            services = api.get_detail_service_from_tel_number(str(tel_num), include_prices=False)
++            sim_data["mts_telematics_100mb"] = _telematics_flag(services)
++        except RateLimitedOut:
++            raise
++        except (ApiError, ValueError) as exc:
++            stat.inc("ошибок проверки пакета 100 МБ")
++            log.debug("МТС: проверка пакета 100 МБ для %s: %s", tel_num, exc)
++
++        crud.upsert_sim(session, known, sim_data, stat)
+         stat.inc("обработано")
+         stat.heartbeat(every=500)
+ 
+--- a/data_collector/mts_collector.py
++++ b/data_collector/mts_collector.py
+@@ -146,8 +146,8 @@
+         )
+         return self._get(url, what=f"блокировки {tel_number}")
+ 
+-    def get_detail_service_from_tel_number(self, tel_number):
+-        """Подключённые услуги со стоимостью."""
++    def get_detail_service_from_tel_number(self, tel_number, *, include_prices=True):
++        """Подключённые услуги; расчёт цен можно отключить для массового обхода."""
+         url = (
+             f"{self.base_url}/b2b/v1/Product/ProductInfo"
+             "?category.name=MobileConnectivity"
+@@ -155,8 +155,10 @@
+             f"&marketSegment.characteristic.value={tel_number}"
+             "&productOffering.actionAllowed=none"
+             "&productOffering.productSpecification.productSpecificationType.name=service"
+-            "&fields=CalculatePrices&applyTimeZone"
++            "&applyTimeZone=true"
+         )
++        if include_prices:
++            url += "&fields=CalculatePrices"
+         return self._get(url, what=f"услуги {tel_number}")
+ 
+     def get_top_tarif_from_tel_number(self, tel_number):
+--- a/database/mysql_models.py
++++ b/database/mysql_models.py
+@@ -1441,6 +1441,7 @@
+     operator_rate_plan_ends = Column(DateTime, comment='Когда заканчивается тариф')
+     operator_sync_at = Column(DateTime, index=True, comment='Когда последний раз обновляли данные от оператора')
+     sim_imsi = Column(String(20, 'utf8mb3_unicode_ci'), index=True, comment='IMSI SIM-карты по данным оператора')
++    mts_telematics_100mb = Column(TINYINT(1), comment="Телематика. Пакет 100 МБ")
+     operator_block_code = Column(String(10, 'utf8mb3_unicode_ci'), comment='Код типа блокировки у оператора (МТС: BL0005, BL0008)')
+     operator_last_ip = Column(String(45, 'utf8mb3_unicode_ci'), comment='Последний IP-адрес SIM по данным оператора')
+     operator_lat = Column(DECIMAL(10, 6), comment='Широта по данным сотовой сети')
+--- a/database/crud.py
++++ b/database/crud.py
+@@ -43,6 +43,7 @@
+     "operator_rate_plan",
+     "operator_rate_plan_ends",
+     "operator_block_code",
++    "mts_telematics_100mb",
+     "operator_lat",
+     "operator_lon",
+     "operator_loc_range",
+--- /dev/null
++++ b/tests/test_mts_telematics.py
+@@ -0,0 +1,62 @@
++import pytest
++
++import clear_mts_entry as mts
++from api_client import ApiError
++from database import crud
++from logging_setup import Stat, get_logger
++
++
++@pytest.mark.parametrize("reply, expected", [
++    ([{"externalID": "PE22816", "status": "PROMO"}], 1),
++    ([{"name": "Телематика. Пакет 100 МБ"}], 1),
++    ([{"name": "Телематика. Пакет 60 МБ 112022"}], 0),
++    ([], 0),
++])
++def test_package_list(reply, expected):
++    assert mts._telematics_flag(reply) == expected
++
++
++def test_package_update(db, models, mts_config, monkeypatch):
++    from data_collector.mts_collector import MtsApi
++
++    state, _ = mts_config
++    state.sims_total = 1
++    known = crud.load_known_iccids(db)
++    stat = Stat("МТС", get_logger("test_mts"))
++    for reply, expected in [
++        ({"error": "unavailable"}, None),
++        ([{"name": "Телематика. Пакет 100 МБ"}], 1),
++        (ApiError("failed"), 1),
++        ([{}], 1),
++        ([], 0),
++    ]:
++        def get_services(self, number, *, include_prices):
++            assert include_prices is False
++            if isinstance(reply, Exception):
++                raise reply
++            return reply
++
++        monkeypatch.setattr(MtsApi, "get_detail_service_from_tel_number", get_services)
++        mts.get_mts_pages("123", db, known, stat)
++        db.expire_all()
++        assert db.query(models.SimCard).one().mts_telematics_100mb == expected
++
++
++def test_service_request_preserves_price_option(monkeypatch):
++    from data_collector.mts_collector import MtsApi
++    from urllib.parse import parse_qs, urlsplit
++
++    client = MtsApi("http://localhost", "", "", "123")
++    monkeypatch.setattr(client, "_get", lambda url, **kw: parse_qs(urlsplit(url).query))
++    try:
++        plain = client.get_detail_service_from_tel_number("70000000000", include_prices=False)
++        priced = client.get_detail_service_from_tel_number("70000000000")
++    finally:
++        client.close()
++
++    assert plain["marketSegment.characteristic.value"] == ["70000000000"]
++    assert plain["productOffering.productSpecification.productSpecificationType.name"] == ["service"]
++    assert plain["productOffering.actionAllowed"] == ["none"]
++    assert plain["applyTimeZone"] == ["true"]
++    assert "fields" not in plain
++    assert priced["fields"] == ["CalculatePrices"]

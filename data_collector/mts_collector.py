@@ -146,8 +146,8 @@ class MtsApi:
         )
         return self._get(url, what=f"блокировки {tel_number}")
 
-    def get_detail_service_from_tel_number(self, tel_number):
-        """Подключённые услуги со стоимостью."""
+    def get_detail_service_from_tel_number(self, tel_number, *, include_prices=True):
+        """Подключённые услуги; расчёт цен можно отключить для массового обхода."""
         url = (
             f"{self.base_url}/b2b/v1/Product/ProductInfo"
             "?category.name=MobileConnectivity"
@@ -155,8 +155,10 @@ class MtsApi:
             f"&marketSegment.characteristic.value={tel_number}"
             "&productOffering.actionAllowed=none"
             "&productOffering.productSpecification.productSpecificationType.name=service"
-            "&fields=CalculatePrices&applyTimeZone"
+            "&applyTimeZone=true"
         )
+        if include_prices:
+            url += "&fields=CalculatePrices"
         return self._get(url, what=f"услуги {tel_number}")
 
     def get_top_tarif_from_tel_number(self, tel_number):

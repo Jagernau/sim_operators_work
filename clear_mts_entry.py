@@ -90,6 +90,26 @@ def _get_block_status(api: mts_collector.MtsApi, tel_num, stat: Stat):
         return None
 
 
+def _telematics_flag(services) -> int:
+    """Проверка по коду МТС или полному названию из списка подключённых услуг."""
+    if not isinstance(services, list):
+        raise ValueError("ожидался список услуг")
+    incomplete = False
+    for service in services:
+        if isinstance(service, dict):
+            name = service.get("name")
+            if service.get("externalID") == "PE22816":
+                return 1
+            if isinstance(name, str) and name.strip():
+                if " ".join(name.casefold().split()) == "телематика. пакет 100 мб":
+                    return 1
+                continue
+        incomplete = True
+    if incomplete:
+        raise ValueError("в списке услуг есть запись без названия")
+    return 0
+
+
 def _process_page(api, session, known, all_sims, stat: Stat) -> list[str]:
     """Обрабатывает симки одной страницы, возвращает их ICCID."""
     iccids: list[str] = []
@@ -127,23 +147,28 @@ def _process_page(api, session, known, all_sims, stat: Stat) -> list[str]:
             stat.note(f"незнакомый код блокировки {block_code} у {tel_num}")
             stat.inc("незнакомых кодов блокировок")
 
-        crud.upsert_sim(
-            session,
-            known,
-            {
-                "operator": OPERATOR_ID,
-                "owner": 1,
-                "source": "mts",
-                "tel_num": tel_num,
-                "iccid": iccid,
-                "status": status,
-                "block_start": block_start,
-                "block_end": block_end,
-                "operator_block_code": block_code,
-                "sim_imsi": imsi,
-            },
-            stat,
-        )
+        sim_data = {
+            "operator": OPERATOR_ID,
+            "owner": 1,
+            "source": "mts",
+            "tel_num": tel_num,
+            "iccid": iccid,
+            "status": status,
+            "block_start": block_start,
+            "block_end": block_end,
+            "operator_block_code": block_code,
+            "sim_imsi": imsi,
+        }
+        try:
+            services = api.get_detail_service_from_tel_number(str(tel_num), include_prices=False)
+            sim_data["mts_telematics_100mb"] = _telematics_flag(services)
+        except RateLimitedOut:
+            raise
+        except (ApiError, ValueError) as exc:
+            stat.inc("ошибок проверки пакета 100 МБ")
+            log.debug("МТС: проверка пакета 100 МБ для %s: %s", tel_num, exc)
+
+        crud.upsert_sim(session, known, sim_data, stat)
         stat.inc("обработано")
         stat.heartbeat(every=500)
 

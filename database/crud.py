@@ -43,6 +43,7 @@ _OPERATOR_FIELDS = (
     "operator_rate_plan",
     "operator_rate_plan_ends",
     "operator_block_code",
+    "mts_telematics_100mb",
     "operator_lat",
     "operator_lon",
     "operator_loc_range",

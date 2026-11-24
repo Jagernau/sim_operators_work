@@ -1441,6 +1441,7 @@ class SimCard(Base):
     operator_rate_plan_ends = Column(DateTime, comment='Когда заканчивается тариф')
     operator_sync_at = Column(DateTime, index=True, comment='Когда последний раз обновляли данные от оператора')
     sim_imsi = Column(String(20, 'utf8mb3_unicode_ci'), index=True, comment='IMSI SIM-карты по данным оператора')
+    mts_telematics_100mb = Column(TINYINT(1), comment="Телематика. Пакет 100 МБ")
     operator_block_code = Column(String(10, 'utf8mb3_unicode_ci'), comment='Код типа блокировки у оператора (МТС: BL0005, BL0008)')
     operator_last_ip = Column(String(45, 'utf8mb3_unicode_ci'), comment='Последний IP-адрес SIM по данным оператора')
     operator_lat = Column(DECIMAL(10, 6), comment='Широта по данным сотовой сети')
